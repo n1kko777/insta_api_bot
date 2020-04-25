@@ -2,6 +2,7 @@ process.env.NTBA_FIX_319 = 1;
 import TelegramBot from "node-telegram-bot-api";
 import Koa from "koa";
 import Router from "koa-router";
+import bodyParser from "koa-bodyparser";
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.BOT_TOKEN;
@@ -9,15 +10,19 @@ const token = process.env.BOT_TOKEN;
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token);
 bot.setWebHook(`${process.env.URL}/bot`);
+
 const app = new Koa();
 
 const router = new Router();
 router.post("/bot", (ctx) => {
-  bot.processUpdate();
+  const { body } = ctx.request;
+  bot.processUpdate(body);
   ctx.status = 200;
 });
 
+app.use(bodyParser());
 app.use(router.routes());
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Listening on ${port}`);
