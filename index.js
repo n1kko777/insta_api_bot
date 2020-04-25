@@ -23,6 +23,15 @@ app.listen(port, () => {
   console.log(`Listening on ${port}`);
 });
 
+// Listen for any kind of message. There are different kinds of
+// messages.
+bot.on("message", (msg) => {
+  const chatId = msg.chat.id;
+
+  // send a message to the chat acknowledging receipt of their message
+  bot.sendMessage(chatId, "Received your message");
+});
+
 // Matches "/create [whatever]"
 bot.onText(/\/create (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
@@ -48,13 +57,4 @@ bot.onText(/\/donate (.+)/, (msg, match) => {
 
   // send back the matched "whatever" to the chat
   bot.sendMessage(chatId, resp);
-});
-
-// Listen for any kind of message. There are different kinds of
-// messages.
-bot.on("message", (msg) => {
-  const chatId = msg.chat.id;
-
-  // send a message to the chat acknowledging receipt of their message
-  bot.sendMessage(chatId, "Received your message");
 });
