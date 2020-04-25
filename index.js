@@ -34,7 +34,7 @@ bot.on("message", (msg) => {
   const chatId = msg.chat.id;
 
   // send a message to the chat acknowledging receipt of their message
-  bot.sendMessage(chatId, "Received your message");
+  // bot.sendMessage(chatId, "Received your message");
 });
 
 // Matches "/create [whatever]"
@@ -58,7 +58,6 @@ bot.onText(/\/update (.+)/, (msg, match) => {
 // Matches "/donate [whatever]"
 bot.onText(/\/donate (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
-  const resp = match[1]; // the captured "whatever"
 
   // send back the matched "whatever" to the chat
   bot.sendMessage(chatId, "Thanks for Donate 🔥", {
