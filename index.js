@@ -61,5 +61,16 @@ bot.onText(/\/donate (.+)/, (msg, match) => {
   const resp = match[1]; // the captured "whatever"
 
   // send back the matched "whatever" to the chat
-  bot.sendMessage(chatId, resp);
+  bot.sendMessage(chatId, "Thanks for Donate 🔥", {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: "Donate",
+            url: "https://donate.stream/donate_5ea45443aa113",
+          },
+        ],
+      ],
+    },
+  });
 });
