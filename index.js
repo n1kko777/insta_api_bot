@@ -55,21 +55,23 @@ bot.onText(/\/update (.+)/, (msg, match) => {
   bot.sendMessage(chatId, resp);
 });
 
-// Matches "/donate [whatever]"
-bot.onText(/\/donate (.+)/, (msg, match) => {
+const donateOptions = {
+  reply_markup: JSON.stringify({
+    inline_keyboard: [
+      [
+        {
+          text: "Donate",
+          url: "https://donate.stream/donate_5ea45443aa113",
+        },
+      ],
+    ],
+  }),
+};
+
+// Matches "/donate"
+bot.onText(/\/donate/, (msg) => {
   const chatId = msg.chat.id;
 
   // send back the matched "whatever" to the chat
-  bot.sendMessage(chatId, "Thanks for Donate 🔥", {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "Donate",
-            url: "https://donate.stream/donate_5ea45443aa113",
-          },
-        ],
-      ],
-    },
-  });
+  bot.sendMessage(chatId, "Thanks for Donate 🔥", donateOptions);
 });
