@@ -6,7 +6,7 @@ require("https")
   .on("request", function (req, res) {
     res.end("");
   });
-const TelegramBot = require("node-telegram-bot-api");
+import TelegramBot from "node-telegram-bot-api";
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.BOT_TOKEN;

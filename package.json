@@ -4,12 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "babel-node index --presets=env"
   },
   "author": "n1kko777",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.2",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
     "cron": "^1.8.2",
     "dotenv": "^8.2.0",
     "node-telegram-bot-api": "^0.40.0",
