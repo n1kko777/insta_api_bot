@@ -1,18 +1,28 @@
 process.env.NTBA_FIX_319 = 1;
-require("dotenv").config();
-require("https")
-  .createServer()
-  .listen(process.env.PORT || 5000)
-  .on("request", function (req, res) {
-    res.end("");
-  });
 import TelegramBot from "node-telegram-bot-api";
+import Koa from "koa";
+import Router from "koa-router";
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.BOT_TOKEN;
 
 // Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token);
+bot.setWebHook(`${process.env.URL}/bot`);
+const app = new Koa();
+
+const router = new Router();
+router.post("/bot", (ctx) => {
+  console.log(ctx);
+
+  ctx.stale = 200;
+});
+
+app.use(router.routes());
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Listening on ${port}`);
+});
 
 // Matches "/create [whatever]"
 bot.onText(/\/create (.+)/, (msg, match) => {
