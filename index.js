@@ -13,9 +13,8 @@ const app = new Koa();
 
 const router = new Router();
 router.post("/bot", (ctx) => {
-  console.log(ctx);
-
-  ctx.stale = 200;
+  bot.processUpdate();
+  ctx.status = 200;
 });
 
 app.use(router.routes());
