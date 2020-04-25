@@ -1,5 +1,5 @@
-require("dotenv").config();
 process.env.NTBA_FIX_319 = 1;
+require("dotenv").config();
 require("https")
   .createServer()
   .listen(process.env.PORT || 5000)
