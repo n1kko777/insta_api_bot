@@ -91,7 +91,10 @@ bot.onText(/\/create (.+)/, (msg, match) => {
   const client_id = validMessage[0],
     client_secret = validMessage[1],
     redirect_uri = validMessage[2],
-    URL_FROM_PAGE = validMessage[3].split("code=")[1].split("#_")[0];
+    URL_FROM_PAGE =
+      validMessage[3] !== "URL_FROM_PAGE"
+        ? validMessage[3].split("code=")[1].split("#_")[0]
+        : null;
   bot.sendMessage(chatId, "Loading...");
 
   try {
