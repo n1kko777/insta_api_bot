@@ -4,6 +4,54 @@ import Koa from "koa";
 import Router from "koa-router";
 import bodyParser from "koa-bodyparser";
 
+let action = null;
+
+// Main insta config
+const instaConfig = {
+  redirect_uri: {
+    value: null,
+    text: "Valid redirect URIs for OAuth",
+  },
+  client_id: {
+    value: null,
+    text: "Instagram app ID",
+  },
+  client_secret: {
+    value: null,
+    text: "The secret of the Instagram app",
+  },
+  code: {
+    value: null,
+    text: "Put here link after success loggin.",
+  },
+  access_token: {
+    value: null,
+    text: null,
+  },
+  user_id: {
+    value: null,
+    text: null,
+  },
+  access_token: {
+    value: null,
+    text: null,
+  },
+  token_type: "bearer",
+  expires_in: {
+    value: null,
+    text: null,
+  },
+};
+
+const createToken = (chatId, text) => {
+  for (const prop in instaConfig) {
+    if (instaConfig[prop].text !== null) {
+      // console.log("obj." + prop + " = " + instaConfig[prop].value);
+      bot.sendMessage(chatId, instaConfig[prop].text);
+    }
+  }
+};
+
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.BOT_TOKEN;
 
@@ -32,9 +80,17 @@ app.listen(port, () => {
 // messages.
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
+  switch (action) {
+    case "create":
+      createToken(chatId, msg.text);
+      break;
+    case "update":
+      bot.sendMessage(chatId, "in developing... Try something else.");
+      break;
 
-  // send a message to the chat acknowledging receipt of their message
-  // bot.sendMessage(chatId, "Received your message");
+    default:
+      break;
+  }
 });
 
 // Matches "/create [whatever]"
@@ -44,6 +100,7 @@ bot.onText(/\/create (.+)/, (msg, match) => {
 
   // send back the matched "whatever" to the chat
   bot.sendMessage(chatId, resp);
+  action = "create";
 });
 
 // Matches "/update [whatever]"
@@ -53,6 +110,7 @@ bot.onText(/\/update (.+)/, (msg, match) => {
 
   // send back the matched "whatever" to the chat
   bot.sendMessage(chatId, resp);
+  action = "update";
 });
 
 const donateOptions = {
@@ -74,4 +132,5 @@ bot.onText(/\/donate/, (msg) => {
 
   // send back the matched "whatever" to the chat
   bot.sendMessage(chatId, "Thanks for Donate 🔥", donateOptions);
+  action = "donate";
 });
