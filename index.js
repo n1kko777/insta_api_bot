@@ -95,22 +95,22 @@ bot.on("message", (msg) => {
 
 // Matches "/create [whatever]"
 bot.onText(/\/create (.+)/, (msg, match) => {
+  action = "create";
   const chatId = msg.chat.id;
   const resp = match[1]; // the captured "whatever"
 
   // send back the matched "whatever" to the chat
   bot.sendMessage(chatId, resp);
-  action = "create";
 });
 
 // Matches "/update [whatever]"
 bot.onText(/\/update (.+)/, (msg, match) => {
+  action = "update";
   const chatId = msg.chat.id;
   const resp = match[1]; // the captured "whatever"
 
   // send back the matched "whatever" to the chat
   bot.sendMessage(chatId, resp);
-  action = "update";
 });
 
 const donateOptions = {
