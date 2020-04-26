@@ -31,6 +31,14 @@ app.listen(port, () => {
 
 // Matches "/auth [whatever]"
 bot.onText(/\/auth (.+)/, (msg, match) => {
+  bot.sendMessage(
+    chatId,
+    "Incorrect command.\nCorrect: /auth client_id, redirect_uri"
+  );
+});
+
+// Matches "/auth [whatever]"
+bot.onText(/\/auth (.+)/, (msg, match) => {
   /*
     https://api.instagram.com/oauth/authorize
     ?client_id=client_id
@@ -42,35 +50,29 @@ bot.onText(/\/auth (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
   const resp = match[1]; // the captured "whatever"
 
-  console.log("resp :>> ", resp);
-
-  if (resp === undefined) {
-    bot.sendMessage(chatId, "Incorrect message.");
-  } else {
-    const validMessage = resp.split(",").map((elem) => elem.trim());
-    const client_id = validMessage[0],
-      redirect_uri = validMessage[1];
-    bot.sendMessage(
-      chatId,
-      "Auth in Instagram account and don't close the opeopened tab",
-      {
-        reply_markup: JSON.stringify({
-          inline_keyboard: [
-            [
-              {
-                text: "Login Instagram",
-                url: `https://api.instagram.com/oauth/authorize
-                ?client_id=${client_id}
-                &redirect_uri=${redirect_uri}
-                &scope=user_profile,user_media
-                &response_type=code`,
-              },
-            ],
+  const validMessage = resp.split(",").map((elem) => elem.trim());
+  const client_id = validMessage[0],
+    redirect_uri = validMessage[1];
+  bot.sendMessage(
+    chatId,
+    "Auth in Instagram account and don't close the opeopened tab",
+    {
+      reply_markup: JSON.stringify({
+        inline_keyboard: [
+          [
+            {
+              text: "Login Instagram",
+              url: `https://api.instagram.com/oauth/authorize
+              ?client_id=${client_id}
+              &redirect_uri=${redirect_uri}
+              &scope=user_profile,user_media
+              &response_type=code`,
+            },
           ],
-        }),
-      }
-    );
-  }
+        ],
+      }),
+    }
+  );
 });
 
 // Matches "/create [whatever]"
