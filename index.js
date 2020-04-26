@@ -56,7 +56,7 @@ bot.onText(/\/auth (.+)/, (msg, match) => {
     redirect_uri = validMessage[1];
   bot.sendMessage(
     chatId,
-    "Auth in Instagram account and don't close the opeopened tab",
+    "Auth in Instagram account and don't close the opeopened tab.\nAfter success login send this:\n/create client_id, client_secret, redirect_uri, URL_FROM_PAGE",
     {
       reply_markup: JSON.stringify({
         inline_keyboard: [
@@ -72,13 +72,57 @@ bot.onText(/\/auth (.+)/, (msg, match) => {
   );
 });
 
+// Matches "/create"
+bot.onText(/\/create/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(
+    chatId,
+    "Incorrect command.\nCorrect: /create client_id, client_secret, redirect_uri, URL_FROM_PAGE"
+  );
+});
+
 // Matches "/create [whatever]"
 bot.onText(/\/create (.+)/, (msg, match) => {
+  // https://api.instagram.com/oauth/access_token?&client_id={app-id}&client_secret={app-secret}&grant_type=authorization_code&redirect_uri={redirect-uri}&code={code}
   const chatId = msg.chat.id;
   const resp = match[1]; // the captured "whatever"
 
-  // send back the matched "whatever" to the chat
-  bot.sendMessage(chatId, resp);
+  const validMessage = resp.split(",").map((elem) => elem.trim());
+  const client_id = validMessage[0],
+    client_secret = validMessage[1],
+    redirect_uri = validMessage[2],
+    URL_FROM_PAGE = validMessage[3].split("code=")[1].split("#_")[0];
+  bot.sendMessage(chatId, "Loading...");
+
+  Axios.post(
+    `https://api.instagram.com/oauth/access_token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&redirect_uri=${redirect_uri}&code=${URL_FROM_PAGE}`
+  )
+    .then((res) => {
+      bot.sendMessage(chatId, res.data);
+    })
+    .catch((err) => {
+      bot.sendMessage(
+        chatId,
+        `${err.code}. ${err.error_message} (${err.error_type})`
+      );
+    });
+
+  // bot.sendMessage(
+  //   chatId,
+  //   "Auth in Instagram account and don't close the opeopened tab.\nAfter success login send this:\n/create client_id, client_secret, redirect_uri, URL_FROM_PAGE",
+  //   {
+  //     reply_markup: JSON.stringify({
+  //       inline_keyboard: [
+  //         [
+  //           {
+  //             text: "Login Instagram",
+  //             url: `https://api.instagram.com/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&scope=user_profile,user_media&response_type=code`,
+  //           },
+  //         ],
+  //       ],
+  //     }),
+  //   }
+  // );
 });
 
 // Matches "/update [whatever]"
