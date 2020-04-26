@@ -94,20 +94,25 @@ bot.onText(/\/create (.+)/, (msg, match) => {
     URL_FROM_PAGE = validMessage[3].split("code=")[1].split("#_")[0];
   bot.sendMessage(chatId, "Loading...");
 
-  Axios.post(
-    `https://api.instagram.com/oauth/access_token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&redirect_uri=${redirect_uri}&code=${URL_FROM_PAGE}`
-  )
-    .then((res) => {
-      console.log("res :>> ", res);
-      bot.sendMessage(chatId, res.data);
-    })
-    .catch((err) => {
-      console.log("err :>> ", err);
-      bot.sendMessage(
-        chatId,
-        `${err.data.code}. ${err.data.error_message} (${err.data.error_type})`
-      );
-    });
+  try {
+    Axios.post(
+      `https://api.instagram.com/oauth/access_token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&redirect_uri=${redirect_uri}&code=${URL_FROM_PAGE}`
+    )
+      .then((res) => {
+        console.log("res :>> ", res);
+        bot.sendMessage(chatId, res.data);
+      })
+      .catch((err) => {
+        console.log("err :>> ", err);
+        bot.sendMessage(
+          chatId,
+          `${err.data.code}. ${err.data.error_message} (${err.data.error_type})`
+        );
+      });
+  } catch (error) {
+    console.log("error :>> ", error);
+    bot.sendMessage(chatId, error);
+  }
 
   // bot.sendMessage(
   //   chatId,
