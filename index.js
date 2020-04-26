@@ -63,11 +63,7 @@ bot.onText(/\/auth (.+)/, (msg, match) => {
           [
             {
               text: "Login Instagram",
-              url: `https://api.instagram.com/oauth/authorize
-              ?client_id=${client_id}
-              &redirect_uri=${redirect_uri}
-              &scope=user_profile,user_media
-              &response_type=code`,
+              url: `https://api.instagram.com/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&scope=user_profile,user_media&response_type=code`,
             },
           ],
         ],
