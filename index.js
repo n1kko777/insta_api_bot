@@ -98,9 +98,11 @@ bot.onText(/\/create (.+)/, (msg, match) => {
     `https://api.instagram.com/oauth/access_token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&redirect_uri=${redirect_uri}&code=${URL_FROM_PAGE}`
   )
     .then((res) => {
+      console.log("res :>> ", res);
       bot.sendMessage(chatId, res.data);
     })
     .catch((err) => {
+      console.log("err :>> ", err);
       bot.sendMessage(
         chatId,
         `${err.code}. ${err.error_message} (${err.error_type})`
