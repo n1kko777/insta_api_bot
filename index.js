@@ -3,54 +3,7 @@ import TelegramBot from "node-telegram-bot-api";
 import Koa from "koa";
 import Router from "koa-router";
 import bodyParser from "koa-bodyparser";
-
-let action = null;
-
-// Main insta config
-const instaConfig = {
-  redirect_uri: {
-    value: null,
-    text: "Valid redirect URIs for OAuth",
-  },
-  client_id: {
-    value: null,
-    text: "Instagram app ID",
-  },
-  client_secret: {
-    value: null,
-    text: "The secret of the Instagram app",
-  },
-  code: {
-    value: null,
-    text: "Put here link after success loggin.",
-  },
-  access_token: {
-    value: null,
-    text: null,
-  },
-  user_id: {
-    value: null,
-    text: null,
-  },
-  access_token: {
-    value: null,
-    text: null,
-  },
-  token_type: "bearer",
-  expires_in: {
-    value: null,
-    text: null,
-  },
-};
-
-const createToken = (chatId, text) => {
-  for (const prop in instaConfig) {
-    if (instaConfig[prop].text !== null) {
-      // console.log("obj." + prop + " = " + instaConfig[prop].value);
-      bot.sendMessage(chatId, instaConfig[prop].text);
-    }
-  }
-};
+import Axios from "axios";
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.BOT_TOKEN;
@@ -76,29 +29,43 @@ app.listen(port, () => {
   console.log(`Listening on ${port}`);
 });
 
-// Listen for any kind of message. There are different kinds of
-// messages.
-bot.on("message", (msg) => {
+// Matches "/auth [whatever]"
+bot.onText(/\/auth (.+)/, (msg, match) => {
+  /*
+    https://api.instagram.com/oauth/authorize
+    ?client_id=client_id
+    &redirect_uri=redirect_uri
+    &scope=user_profile,user_media
+    &response_type=code
+   */
+
   const chatId = msg.chat.id;
+  const resp = match[1]; // the captured "whatever"
 
-  console.log("action :>> ", action);
+  if (resp === undefined) {
+    bot.sendMessage(chatId, "Incorrect message.");
+  } else {
+    const validMessage = resp.split(",").map((elem) => elem.trim());
+    const client_id = validMessage[0],
+      redirect_uri = validMessage[1];
+    bot.sendMessage(chatId, "Loading...");
 
-  switch (action) {
-    case "create":
-      createToken(chatId, msg.text);
-      break;
-    case "update":
-      bot.sendMessage(chatId, "in developing... Try something else.");
-      break;
-
-    default:
-      break;
+    Axios.get(
+      `https://api.instagram.com/oauth/authorize
+    ?client_id=${client_id}
+    &redirect_uri=${redirect_uri}
+    &scope=user_profile,user_media
+    &response_type=code`
+    ).then((res) => {
+      bot.sendMessage(chatId, res.data);
+    });
   }
+  // send back the matched "whatever" to the chat
+  bot.sendMessage(chatId, resp);
 });
 
 // Matches "/create [whatever]"
 bot.onText(/\/create (.+)/, (msg, match) => {
-  action = "create";
   const chatId = msg.chat.id;
   const resp = match[1]; // the captured "whatever"
 
@@ -108,7 +75,6 @@ bot.onText(/\/create (.+)/, (msg, match) => {
 
 // Matches "/update [whatever]"
 bot.onText(/\/update (.+)/, (msg, match) => {
-  action = "update";
   const chatId = msg.chat.id;
   const resp = match[1]; // the captured "whatever"
 
@@ -135,5 +101,4 @@ bot.onText(/\/donate/, (msg) => {
 
   // send back the matched "whatever" to the chat
   bot.sendMessage(chatId, "Thanks for Donate 🔥", donateOptions);
-  action = "donate";
 });
