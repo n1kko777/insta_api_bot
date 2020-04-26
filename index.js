@@ -105,7 +105,7 @@ bot.onText(/\/create (.+)/, (msg, match) => {
       console.log("err :>> ", err);
       bot.sendMessage(
         chatId,
-        `${err.code}. ${err.error_message} (${err.error_type})`
+        `${err.data.code}. ${err.data.error_message} (${err.data.error_type})`
       );
     });
 
