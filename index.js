@@ -29,8 +29,9 @@ app.listen(port, () => {
   console.log(`Listening on ${port}`);
 });
 
-// Matches "/auth [whatever]"
-bot.onText(/\/auth (.+)/, (msg, match) => {
+// Matches "/auth"
+bot.onText(/\/auth/, (msg) => {
+  const chatId = msg.chat.id;
   bot.sendMessage(
     chatId,
     "Incorrect command.\nCorrect: /auth client_id, redirect_uri"
