@@ -87,17 +87,18 @@ bot.onText(/\/create (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
   const resp = match[1]; // the captured "whatever"
 
-  const validMessage = resp.split(",").map((elem) => elem.trim());
-  const client_id = validMessage[0],
-    client_secret = validMessage[1],
-    redirect_uri = validMessage[2],
-    URL_FROM_PAGE =
-      validMessage[3] !== "URL_FROM_PAGE"
-        ? validMessage[3].split("code=")[1].split("#_")[0]
-        : null;
-  bot.sendMessage(chatId, "Loading...");
-
   try {
+    const validMessage = resp.split(",").map((elem) => elem.trim());
+    const client_id = validMessage[0],
+      client_secret = validMessage[1],
+      redirect_uri = validMessage[2],
+      URL_FROM_PAGE =
+        validMessage[3] !== "URL_FROM_PAGE" &&
+        validMessage[3].split("code=").length !== 0
+          ? validMessage[3].split("code=")[1].split("#_")[0]
+          : null;
+    bot.sendMessage(chatId, "Loading...");
+
     Axios.post(
       `https://api.instagram.com/oauth/access_token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&redirect_uri=${redirect_uri}&code=${URL_FROM_PAGE}`
     )
