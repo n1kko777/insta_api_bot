@@ -80,6 +80,9 @@ app.listen(port, () => {
 // messages.
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
+
+  console.log("action :>> ", action);
+
   switch (action) {
     case "create":
       createToken(chatId, msg.text);
