@@ -110,7 +110,6 @@ bot.onText(/\/create (.+)/, (msg, match) => {
       })
       .post("https://api.instagram.com/oauth/access_token")
       .then(({ statusCode, body }) => {
-        console.log("resp :>> ", `statusCode ${statusCode}:\n${body}`);
         if (statusCode != 400) {
           /*
           https://graph.instagram.com/access_token
@@ -118,7 +117,6 @@ bot.onText(/\/create (.+)/, (msg, match) => {
           &client_secret={instagram-app-secret}
           &access_token={short-lived-access-token}
           */
-          console.log("body.access_token :>> ", body.access_token);
           const { access_token } = JSON.parse(body);
           bot.sendMessage(chatId, `Short token (1 hour): ${access_token}`);
           bot.sendMessage(chatId, `Loading...`);
@@ -130,9 +128,17 @@ bot.onText(/\/create (.+)/, (msg, match) => {
               `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${client_secret}&access_token=${access_token}`
             )
             .then(({ statusCode, body }) => {
-              bot.sendMessage(chatId, `statusCode ${statusCode}:\n${body}`);
+              const { access_token, expires_in } = JSON.parse(body);
+              var nexpires_in = new Date();
+              nexpires_in.setSeconds(nexpires_in.getSeconds() + expires_in);
+
+              bot.sendMessage(
+                chatId,
+                `statusCode ${statusCode}:\naccess_token: ${access_token}\nexpires_in: ${nexpires_in}`
+              );
             })
             .catch((e) => {
+              console.log("e :>> ", e);
               bot.sendMessage(chatId, e);
             });
         } else {
