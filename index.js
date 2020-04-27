@@ -3,10 +3,11 @@ import TelegramBot from "node-telegram-bot-api";
 import Koa from "koa";
 import Router from "koa-router";
 import bodyParser from "koa-bodyparser";
-import Axios from "axios";
 
-// replace the value below with the Telegram token you receive from @BotFather
+const curl = new (require("curl-request"))();
+
 const token = process.env.BOT_TOKEN;
+// replace the value below with the Telegram token you receive from @BotFather
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token);
@@ -99,38 +100,27 @@ bot.onText(/\/create (.+)/, (msg, match) => {
           : null;
     bot.sendMessage(chatId, "Loading...");
 
-    Axios.post(
-      `https://api.instagram.com/oauth/access_token?client_id=${client_id}&client_secret=${client_secret}&grant_type=authorization_code&redirect_uri=${redirect_uri}&code=${URL_FROM_PAGE}`
-    )
-      .then((res) => {
-        console.log("res :>> ", res);
-        bot.sendMessage(chatId, res.data);
+    curl
+      .setBody({
+        client_id: client_id,
+        client_secret: client_secret,
+        grant_type: "authorization_code",
+        redirect_uri: redirect_uri,
+        code: URL_FROM_PAGE,
       })
-      .catch((err) => {
-        console.log("err :>> ", err);
-        bot.sendMessage(chatId, err.data);
+      .post("https://api.instagram.com/oauth/access_token")
+      .then(({ statusCode, body }) => {
+        console.log("resp :>> ", `statusCode ${statusCode}:\n${body}`);
+        bot.sendMessage(chatId, `statusCode ${statusCode}:\n${body}`);
+      })
+      .catch((e) => {
+        console.log("e :>> ", e);
+        bot.sendMessage(chatId, e);
       });
   } catch (error) {
     console.log("error :>> ", error);
     bot.sendMessage(chatId, error);
   }
-
-  // bot.sendMessage(
-  //   chatId,
-  //   "Auth in Instagram account and don't close the opeopened tab.\nAfter success login send this:\n/create client_id, client_secret, redirect_uri, URL_FROM_PAGE",
-  //   {
-  //     reply_markup: JSON.stringify({
-  //       inline_keyboard: [
-  //         [
-  //           {
-  //             text: "Login Instagram",
-  //             url: `https://api.instagram.com/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&scope=user_profile,user_media&response_type=code`,
-  //           },
-  //         ],
-  //       ],
-  //     }),
-  //   }
-  // );
 });
 
 // Matches "/update [whatever]"
