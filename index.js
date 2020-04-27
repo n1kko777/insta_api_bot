@@ -111,7 +111,29 @@ bot.onText(/\/create (.+)/, (msg, match) => {
       .post("https://api.instagram.com/oauth/access_token")
       .then(({ statusCode, body }) => {
         console.log("resp :>> ", `statusCode ${statusCode}:\n${body}`);
-        bot.sendMessage(chatId, `statusCode ${statusCode}:\n${body}`);
+        if (statusCode != 400) {
+          /*
+          https://graph.instagram.com/access_token
+          ?grant_type=ig_exchange_token
+          &client_secret={instagram-app-secret}
+          &access_token={short-lived-access-token}
+          */
+          curl
+            .setHeaders([
+              "user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36",
+            ])
+            .get(
+              `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${client_secret}&access_token=${body.access_token}`
+            )
+            .then(({ statusCode, body }) => {
+              bot.sendMessage(chatId, `statusCode ${statusCode}:\n${body}`);
+            })
+            .catch((e) => {
+              bot.sendMessage(chatId, e);
+            });
+        } else {
+          bot.sendMessage(chatId, `statusCode ${statusCode}:\n${body}`);
+        }
       })
       .catch((e) => {
         console.log("e :>> ", e);
