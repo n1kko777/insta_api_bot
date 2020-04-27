@@ -155,13 +155,46 @@ bot.onText(/\/create (.+)/, (msg, match) => {
   }
 });
 
+// Matches "/update"
+bot.onText(/\/update/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "Incorrect command.\nCorrect: /update access_token");
+});
+
 // Matches "/update [whatever]"
 bot.onText(/\/update (.+)/, (msg, match) => {
-  const chatId = msg.chat.id;
-  const resp = match[1]; // the captured "whatever"
+  // https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token={long-lived-access-token}
 
-  // send back the matched "whatever" to the chat
-  bot.sendMessage(chatId, resp);
+  const chatId = msg.chat.id;
+  const access_token = match[1]; // the captured "whatever"
+
+  try {
+    bot.sendMessage(chatId, `Loading...`);
+    curl
+      .setHeaders([
+        "user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36",
+      ])
+      .get(
+        `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${access_token}`
+      )
+      .then(({ statusCode, body }) => {
+        const { access_token, expires_in } = JSON.parse(body);
+        var nexpires_in = new Date();
+        nexpires_in.setSeconds(nexpires_in.getSeconds() + expires_in);
+
+        bot.sendMessage(
+          chatId,
+          `statusCode ${statusCode}:\naccess_token: ${access_token}\nexpires_in: ${nexpires_in}`
+        );
+      })
+      .catch((e) => {
+        console.log("e :>> ", e);
+        bot.sendMessage(chatId, e);
+      });
+  } catch (error) {
+    console.log("error :>> ", error);
+    bot.sendMessage(chatId, error);
+  }
 });
 
 const donateOptions = {
