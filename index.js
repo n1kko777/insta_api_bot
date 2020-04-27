@@ -118,6 +118,9 @@ bot.onText(/\/create (.+)/, (msg, match) => {
           &client_secret={instagram-app-secret}
           &access_token={short-lived-access-token}
           */
+          console.log("body.access_token :>> ", body.access_token);
+          bot.sendMessage(chatId, `Short token (1 hour): ${body.access_token}`);
+          bot.sendMessage(chatId, `Loading...`);
           curl
             .setHeaders([
               "user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36",
