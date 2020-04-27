@@ -119,7 +119,7 @@ bot.onText(/\/create (.+)/, (msg, match) => {
           &access_token={short-lived-access-token}
           */
           console.log("body.access_token :>> ", body.access_token);
-          const access_token = JSON.parse(body);
+          const { access_token } = JSON.parse(body);
           bot.sendMessage(chatId, `Short token (1 hour): ${access_token}`);
           bot.sendMessage(chatId, `Loading...`);
           curl
