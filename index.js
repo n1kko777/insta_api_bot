@@ -11,12 +11,12 @@ const token = process.env.BOT_TOKEN;
 
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token);
-bot.setWebHook(`${process.env.URL}/bot`);
+bot.setWebHook("https://" + process.env.URL);
 
 const app = new Koa();
 
 const router = new Router();
-router.post("/bot", (ctx) => {
+router.post("/", (ctx) => {
   const { body } = ctx.request;
   bot.processUpdate(body);
   ctx.status = 200;
@@ -41,14 +41,6 @@ bot.onText(/\/auth/, (msg) => {
 
 // Matches "/auth [whatever]"
 bot.onText(/\/auth (.+)/, (msg, match) => {
-  /*
-    https://api.instagram.com/oauth/authorize
-    ?client_id=client_id
-    &redirect_uri=redirect_uri
-    &scope=user_profile,user_media
-    &response_type=code
-   */
-
   const chatId = msg.chat.id;
   const resp = match[1]; // the captured "whatever"
 

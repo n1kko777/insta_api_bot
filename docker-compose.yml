@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  instapibot:
+    container_name: instapibot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - VIRTUAL_HOST=${URL}
+      - LETSENCRYPT_HOST=${URL}
+      - LETSENCRYPT_EMAIL=${EMAIL_HOST_USER}
+      - VIRTUAL_PORT=${PORT}
+    restart: unless-stopped
