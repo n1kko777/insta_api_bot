@@ -12,6 +12,11 @@ const token = process.env.BOT_TOKEN;
 const app = new Koa();
 
 const router = new Router();
+
+// Create a bot that uses 'polling' to fetch new updates
+const bot = new TelegramBot(token);
+bot.setWebHook("https://" + process.env.URL + "/");
+
 router.post("/", (ctx) => {
   const { body } = ctx.request;
   bot.processUpdate(body);
@@ -25,10 +30,6 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Listening on ${port}`);
 });
-
-// Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token);
-bot.setWebHook("https://" + process.env.URL);
 
 // Matches "/auth"
 bot.onText(/\/auth/, (msg) => {
