@@ -6,12 +6,8 @@ import bodyParser from "koa-bodyparser";
 
 const curl = new (require("curl-request"))();
 
-const token = process.env.BOT_TOKEN;
 // replace the value below with the Telegram token you receive from @BotFather
-
-// Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token);
-bot.setWebHook("https://" + process.env.URL);
+const token = process.env.BOT_TOKEN;
 
 const app = new Koa();
 
@@ -29,6 +25,10 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Listening on ${port}`);
 });
+
+// Create a bot that uses 'polling' to fetch new updates
+const bot = new TelegramBot(token);
+bot.setWebHook("https://" + process.env.URL);
 
 // Matches "/auth"
 bot.onText(/\/auth/, (msg) => {
