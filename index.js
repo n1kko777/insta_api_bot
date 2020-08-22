@@ -31,6 +31,25 @@ app.listen(port, () => {
   console.log(`Listening on ${port}`);
 });
 
+// Matches "/start"
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(
+    chatId,
+    `Instruction:
+
+1. https://developers.facebook.com/docs/instagram-basic-display-api/getting-started (step 1–3)
+2. /auth client_id, redirect_uri
+3. /create client_id, client_secret, redirect_uri, URL_FROM_PAGE
+
+To update after expired:
+/update access_token
+
+Say "Thank you!":
+/donate`
+  );
+});
+
 // Matches "/auth"
 bot.onText(/\/auth/, (msg) => {
   const chatId = msg.chat.id;
