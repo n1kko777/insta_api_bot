@@ -1,231 +1,189 @@
-process.env.NTBA_FIX_319 = 1;
-import TelegramBot from "node-telegram-bot-api";
-import Koa from "koa";
-import Router from "koa-router";
-import bodyParser from "koa-bodyparser";
+const { default: axios } = require("axios");
+const { Telegraf, Markup } = require("telegraf");
+const queryString = require("query-string");
 
-const curl = new (require("curl-request"))();
-
-// replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.BOT_TOKEN;
+if (token === undefined) {
+  throw new Error("BOT_TOKEN must be provided!");
+}
 
-const app = new Koa();
+const bot = new Telegraf(token);
 
-const router = new Router();
-
-// Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token);
-bot.setWebHook("https://" + process.env.URL + "/");
-
-router.post("/", (ctx) => {
-  const { body } = ctx.request;
-  bot.processUpdate(body);
-  ctx.status = 200;
-});
-
-app.use(bodyParser());
-app.use(router.routes());
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Listening on ${port}`);
-});
-
-// Matches "/start"
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(
-    chatId,
-    `Instruction:
+// Start
+bot.command("start", (ctx) =>
+  ctx.reply(`Instruction:
 
 1. https://developers.facebook.com/docs/instagram-basic-display-api/getting-started (step 1–3)
-2. /auth client_id, redirect_uri
-3. /create client_id, client_secret, redirect_uri, URL_FROM_PAGE
+2. /auth client_id redirect_uri
+3. /create client_id client_secret redirect_uri URL_FROM_PAGE
 
 To update after expired:
 /update access_token
+`)
+);
 
-Say "Thank you!":
-/donate`
-  );
+// Auth
+bot.hears(/\/auth (.+)/, (ctx) => {
+  const args = ctx.message.text.split(" ");
+  const [, client_id, redirect_uri] = args;
+
+  if (client_id && redirect_uri) {
+    ctx.reply(
+      "Auth in Instagram account and don't close the opeopened tab.\nAfter success login send this:\n/create client_id client_secret redirect_uri URL_FROM_PAGE",
+      Markup.inlineKeyboard([
+        Markup.button.url(
+          "Login Instagram",
+          `https://api.instagram.com/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&scope=user_profile,user_media&response_type=code`
+        ),
+      ])
+    );
+  } else {
+    ctx.reply(`Incorrect command.\nCorrect: /auth client_id redirect_uri`);
+  }
+});
+bot.hears(/\/auth$/, (ctx) => {
+  ctx.reply(`Incorrect command.\nCorrect: /auth client_id redirect_uri`);
 });
 
-// Matches "/auth"
-bot.onText(/\/auth/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(
-    chatId,
-    "Incorrect command.\nCorrect: /auth client_id, redirect_uri"
-  );
-});
-
-// Matches "/auth [whatever]"
-bot.onText(/\/auth (.+)/, (msg, match) => {
-  const chatId = msg.chat.id;
-  const resp = match[1]; // the captured "whatever"
-
-  const validMessage = resp.split(",").map((elem) => elem.trim());
-  const client_id = validMessage[0],
-    redirect_uri = validMessage[1];
-  bot.sendMessage(
-    chatId,
-    "Auth in Instagram account and don't close the opeopened tab.\nAfter success login send this:\n/create client_id, client_secret, redirect_uri, URL_FROM_PAGE",
-    {
-      reply_markup: JSON.stringify({
-        inline_keyboard: [
-          [
-            {
-              text: "Login Instagram",
-              url: `https://api.instagram.com/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&scope=user_profile,user_media&response_type=code`,
-            },
-          ],
-        ],
-      }),
-    }
-  );
-});
-
-// Matches "/create"
-bot.onText(/\/create/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(
-    chatId,
-    "Incorrect command.\nCorrect: /create client_id, client_secret, redirect_uri, URL_FROM_PAGE"
-  );
-});
-
-// Matches "/create [whatever]"
-bot.onText(/\/create (.+)/, (msg, match) => {
+// Create
+bot.hears(/\/create (.+)/, async (ctx) => {
   // https://api.instagram.com/oauth/access_token?&client_id={app-id}&client_secret={app-secret}&grant_type=authorization_code&redirect_uri={redirect-uri}&code={code}
-  const chatId = msg.chat.id;
-  const resp = match[1]; // the captured "whatever"
+  const args = ctx.message.text.split(" ");
+  const [, client_id, client_secret, redirect_uri, callback_url] = args;
 
-  try {
-    const validMessage = resp.split(",").map((elem) => elem.trim());
-    const client_id = validMessage[0],
-      client_secret = validMessage[1],
-      redirect_uri = validMessage[2],
-      URL_FROM_PAGE =
-        validMessage[3] !== "URL_FROM_PAGE" &&
-        validMessage[3].split("code=").length !== 0
-          ? validMessage[3].split("code=")[1].split("#_")[0]
-          : null;
-    bot.sendMessage(chatId, "Loading...");
+  if (client_id && client_secret && redirect_uri && callback_url) {
+    const code =
+      callback_url !== "URL_FROM_PAGE" &&
+      callback_url.split("code=").length !== 0
+        ? callback_url.split("code=")[1].split("#_")[0]
+        : null;
 
-    curl
-      .setBody({
-        client_id: client_id,
-        client_secret: client_secret,
-        grant_type: "authorization_code",
-        redirect_uri: redirect_uri,
-        code: URL_FROM_PAGE,
-      })
-      .post("https://api.instagram.com/oauth/access_token")
-      .then(({ statusCode, body }) => {
-        if (statusCode != 400) {
-          /*
-          https://graph.instagram.com/access_token
-          ?grant_type=ig_exchange_token
-          &client_secret={instagram-app-secret}
-          &access_token={short-lived-access-token}
-          */
-          const { access_token } = JSON.parse(body);
-          bot.sendMessage(chatId, `Short token (1 hour): ${access_token}`);
-          bot.sendMessage(chatId, `Loading...`);
-          curl
-            .setHeaders([
-              "user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36",
-            ])
-            .get(
-              `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${client_secret}&access_token=${access_token}`
-            )
-            .then(({ statusCode, body }) => {
-              const { access_token, expires_in } = JSON.parse(body);
-              var nexpires_in = new Date();
+    const { message_id } = await ctx.reply("Loading...");
+
+    try {
+      await axios
+        .post(
+          "https://api.instagram.com/oauth/access_token",
+          queryString.stringify({
+            client_id: client_id,
+            client_secret: client_secret,
+            grant_type: "authorization_code",
+            redirect_uri: redirect_uri,
+            code,
+          })
+        )
+        .then(async (postRes) => {
+          const { access_token: short_access_token } = postRes.data;
+
+          await axios
+            .get("https://graph.instagram.com/access_token", {
+              params: {
+                grant_type: "ig_exchange_token",
+                client_secret,
+                access_token: short_access_token,
+              },
+              headers: {
+                "user-agent":
+                  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36",
+              },
+            })
+            .then((getRes) => {
+              const { access_token, expires_in } = getRes.data;
+              const nexpires_in = new Date();
               nexpires_in.setSeconds(nexpires_in.getSeconds() + expires_in);
 
-              bot.sendMessage(
-                chatId,
-                `statusCode ${statusCode}:\naccess_token: ${access_token}\nexpires_in: ${nexpires_in}`
+              ctx.reply(
+                `access_token: ${access_token}\nexpires_in: ${nexpires_in}`
               );
-            })
-            .catch((e) => {
-              console.log("e :>> ", e);
-              bot.sendMessage(chatId, e);
+              ctx.deleteMessage(message_id);
             });
-        } else {
-          bot.sendMessage(chatId, `statusCode ${statusCode}:\n${body}`);
-        }
-      })
-      .catch((e) => {
-        console.log("e :>> ", e);
-        bot.sendMessage(chatId, e);
-      });
-  } catch (error) {
-    console.log("error :>> ", error);
-    bot.sendMessage(chatId, error);
+        });
+    } catch (error) {
+      console.log(error);
+      const errorText =
+        ("response" in error &&
+          "data" in error.response &&
+          ("error" in error.response.data
+            ? error.response.data.error.message
+            : "Something went wrong... Try again" ||
+              "error_message" in error.response.data
+            ? error.response.data.error_message
+            : "Something went wrong... Try again")) ||
+        "Something went wrong... Try again";
+
+      ctx.deleteMessage(message_id);
+      ctx.reply(errorText);
+    }
+  } else {
+    ctx.reply(
+      `Incorrect command.\nCorrect: /create client_id client_secret redirect_uri URL_FROM_PAGE`
+    );
   }
 });
-
-// Matches "/update"
-bot.onText(/\/update/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Incorrect command.\nCorrect: /update access_token");
+bot.hears(/\/create$/, (ctx) => {
+  ctx.reply(
+    `Incorrect command.\nCorrect: /create client_id client_secret redirect_uri URL_FROM_PAGE`
+  );
 });
 
-// Matches "/update [whatever]"
-bot.onText(/\/update (.+)/, (msg, match) => {
+// Update
+bot.hears(/\/update (.+)/, async (ctx) => {
   // https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token={long-lived-access-token}
 
-  const chatId = msg.chat.id;
-  const access_token = match[1]; // the captured "whatever"
+  const args = ctx.message.text.split(" ");
+  const [, old_access_token] = args;
 
-  try {
-    bot.sendMessage(chatId, `Loading...`);
-    curl
-      .setHeaders([
-        "user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36",
-      ])
-      .get(
-        `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${access_token}`
-      )
-      .then(({ statusCode, body }) => {
-        const { access_token, expires_in } = JSON.parse(body);
-        var nexpires_in = new Date();
-        nexpires_in.setSeconds(nexpires_in.getSeconds() + expires_in);
+  if (old_access_token) {
+    const { message_id: update_message_id } = await ctx.reply("Loading...");
 
-        bot.sendMessage(
-          chatId,
-          `statusCode ${statusCode}:\naccess_token: ${access_token}\nexpires_in: ${nexpires_in}`
-        );
-      })
-      .catch((e) => {
-        console.log("e :>> ", e);
-        bot.sendMessage(chatId, e);
-      });
-  } catch (error) {
-    console.log("error :>> ", error);
-    bot.sendMessage(chatId, error);
+    try {
+      await axios
+        .get("https://graph.instagram.com/refresh_access_token", {
+          params: {
+            grant_type: "ig_refresh_token",
+            access_token: old_access_token,
+          },
+          headers: {
+            "user-agent":
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36",
+          },
+        })
+        .then((res) => {
+          const { access_token, expires_in } = res.data;
+          const nexpires_in = new Date();
+          nexpires_in.setSeconds(nexpires_in.getSeconds() + expires_in);
+
+          ctx.reply(
+            `access_token: ${access_token}\nexpires_in: ${nexpires_in}`
+          );
+          ctx.deleteMessage(update_message_id);
+        });
+    } catch (error) {
+      console.log(error);
+      const errorText =
+        ("response" in error &&
+          "data" in error.response &&
+          ("error" in error.response.data
+            ? error.response.data.error.message
+            : "Something went wrong... Try again" ||
+              "error_message" in error.response.data
+            ? error.response.data.error_message
+            : "Something went wrong... Try again")) ||
+        "Something went wrong... Try again";
+
+      ctx.deleteMessage(update_message_id);
+      ctx.reply(errorText);
+    }
+  } else {
+    ctx.reply(`Incorrect command.\nCorrect: /update access_token`);
   }
 });
-
-const donateOptions = {
-  reply_markup: JSON.stringify({
-    inline_keyboard: [
-      [
-        {
-          text: "Donate",
-          url: "https://donate.stream/donate_5ea45443aa113",
-        },
-      ],
-    ],
-  }),
-};
-
-// Matches "/donate"
-bot.onText(/\/donate/, (msg) => {
-  const chatId = msg.chat.id;
-
-  // send back the matched "whatever" to the chat
-  bot.sendMessage(chatId, "Thanks for Donate 🔥", donateOptions);
+bot.hears(/\/update$/, (ctx) => {
+  ctx.reply(`Incorrect command.\nCorrect: /update access_token`);
 });
+
+bot.launch();
+
+// Enable graceful stop
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));
