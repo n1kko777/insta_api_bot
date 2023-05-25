@@ -11,6 +11,3 @@ Instruction:
 
 To update after expired:
 /update access_token
-
-Say "Thank you!":
-/donate
